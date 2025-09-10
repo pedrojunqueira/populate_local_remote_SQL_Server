@@ -1,24 +1,34 @@
 # Fabric Mirror Testing Project
 
-A Python-based data population tool for testing Microsoft Fabric mirroring capabilities between local and remote SQL Server instances.
+A comprehensive Python-based data population and table management toolkit for testing Microsoft Fabric mirroring capabilities between local and remote SQL Server instances.
 
 ## 📋 Project Overview
 
-This project provides scripts to populate sample Australian address data into both local and remote SQL Server databases. It's specifically designed for testing data mirroring functionality in Microsoft Fabric by creating consistent test datasets across different database instances.
+This project provides a complete framework for creating, managing, and populating SQL Server tables with realistic test data. It features both legacy scripts for specific use cases and modern generic tools that can handle any table structure. The system is specifically designed for testing data mirroring functionality in Microsoft Fabric by creating consistent test datasets across different database instances.
 
 ## 🏗️ Project Structure
 
 ```
 fabric_mirror/
-├── README.md                    # This file
-├── requirements.txt             # Python dependencies
-├── .gitignore                  # Git ignore rules (protects credentials)
-├── config.ini.template        # Configuration template
-├── create_config.py           # Interactive config file generator
-├── create_table.sql           # SQL script to create the Addresses table
-├── populate_table_local.py    # Populate local SQL Server instance
-├── populate_table.py          # Populate remote SQL Server instance
-└── config.ini                 # Configuration file (auto-generated, git-ignored)
+├── README.md                      # This file
+├── requirements.txt               # Python dependencies
+├── .gitignore                    # Git ignore rules (protects credentials)
+├── config.ini.template          # Configuration template
+├── create_config.py              # Interactive config file generator
+├── LICENSE                       # MIT License
+│
+├── 🎯 Generic Tools (Recommended)
+├── populate_tables_generic.py    # Generic table populator with DB selection
+├── create_table_wizard.py        # Interactive table creation wizard
+│
+├── 📄 Table Definitions
+├── create_table_addresses.sql    # Addresses table definition
+├── create_table_person.sql       # Person table definition (example)
+│
+├── 🔧 Legacy Scripts
+├── populate_table_local.py       # Legacy: Populate specific local instance
+├── populate_table.py             # Legacy: Populate specific remote instance
+└── config.ini                    # Configuration file (auto-generated, git-ignored)
 ```
 
 ## 🎯 Use Cases
@@ -27,6 +37,8 @@ fabric_mirror/
 - **Database Migration Testing**: Validate data consistency between environments
 - **Performance Testing**: Generate sample data for load testing scenarios
 - **Development Environment Setup**: Quick sample data population for development
+- **Schema Management**: Create and modify table structures interactively
+- **Multi-Environment Testing**: Seamlessly switch between local and remote databases
 
 ## 🚀 Quick Start
 
@@ -43,24 +55,7 @@ fabric_mirror/
 pip install -r requirements.txt
 ```
 
-### 2. Create Database Table
-
-Run the SQL script on your target databases:
-
-```sql
--- Execute create_table.sql on both local and remote instances
-CREATE TABLE Addresses (
-    AddressID INT IDENTITY(1,1) PRIMARY KEY,
-    StreetAddress NVARCHAR(100) NOT NULL,
-    City NVARCHAR(50) NOT NULL,
-    State NVARCHAR(3) NOT NULL,
-    PostalCode NVARCHAR(4) NOT NULL,
-    Country NVARCHAR(50) NOT NULL DEFAULT 'Australia',
-    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
-);
-```
-
-### 3. Configure Database Connections
+### 2. Configure Database Connections
 
 Run the interactive configuration script:
 
@@ -91,23 +86,161 @@ For each selected environment, you'll be prompted for:
 - `[LOCAL]` - Local development/testing database settings (if configured)
 - `[REMOTE]` - Remote/Azure database settings (if configured)
 
-### 4. Populate Sample Data
+### 3. Create Tables (Choose Your Method)
 
-**Script Configuration Usage:**
-- `populate_table_local.py` - Uses `[DEFAULT]` section from config.ini
-- `populate_table.py` - Uses `[REMOTE]` section from config.ini
+#### 🎯 Method A: Interactive Table Creation (Recommended)
 
-**Run the scripts:**
+Create tables using the interactive wizard:
+
 ```bash
-python populate_table_local.py   # Uses DEFAULT configuration
+python create_table_wizard.py
+```
+
+**Features:**
+- Interactive column-by-column definition
+- Smart data type suggestions
+- Primary key and constraint setup
+- Default value configuration
+- Real-time SQL preview
+- Automatic file generation
+
+#### 📄 Method B: Manual SQL Files
+
+Create SQL files following the naming convention `create_table_<tablename>.sql`:
+
+```sql
+-- Example: create_table_addresses.sql
+CREATE TABLE Addresses (
+    AddressID INT IDENTITY(1,1) PRIMARY KEY,
+    StreetAddress NVARCHAR(100) NOT NULL,
+    City NVARCHAR(50) NOT NULL,
+    State NVARCHAR(3) NOT NULL,
+    PostalCode NVARCHAR(4) NOT NULL,
+    Country NVARCHAR(50) NOT NULL DEFAULT 'Australia',
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+```
+
+### 4. Populate Tables with Data
+
+#### 🚀 Generic Table Populator (Recommended)
+
+Use the intelligent generic populator:
+
+```bash
+python populate_tables_generic.py
+```
+
+**Features:**
+- **Database Selection**: Choose between LOCAL and REMOTE at runtime
+- **Table Discovery**: Automatically finds all `create_table_*.sql` files
+- **Smart Data Generation**: Context-aware fake data based on column names and types
+- **Interactive Interface**: Select table and specify record count
+- **Flexible**: Works with any table structure
+
+#### 🔧 Legacy Scripts (Specific Use Cases)
+
+For backward compatibility with existing workflows:
+
+```bash
+python populate_table_local.py   # Uses DEFAULT/LOCAL configuration
 python populate_table.py         # Uses REMOTE configuration (if configured)
 ```
 
-**Note:** If you only configured one environment, both scripts will use the `[DEFAULT]` section, which automatically inherits from your configured environment.
+**Note:** These scripts generate 10 rows of Australian address data and use fallback logic (LOCAL → DEFAULT).
 
-Each script generates 10 rows of realistic Australian address data using the Faker library.
+## 🧠 Smart Data Generation
 
-## 🛠️ Configuration
+The generic populator includes intelligent data generation based on column names and types:
+
+### **Text/String Columns**
+- `*address*`, `*street*` → Realistic street addresses
+- `*city*` → Australian city names  
+- `*state*` → Australian state abbreviations (NSW, VIC, QLD, etc.)
+- `*postal*`, `*zip*` → Valid Australian postal codes
+- `*country*` → "Australia" 
+- `*first*name*` → First names
+- `*last*name*` → Last names
+- `*name*` (generic) → Full names
+- `*email*` → Email addresses
+- `*phone*` → Phone numbers
+- `*company*` → Company names
+
+### **Numeric Columns**
+- `*age*` → Ages between 18-80
+- `*year*` → Years between 1950-2025  
+- `*price*`, `*cost*`, `*amount*` → Currency values (10.00-1000.00)
+- Other numeric → Random integers/decimals
+
+### **Date/Time Columns**
+- `*birth*`, `*dob*` → Birth dates
+- `*created*`, `*updated*` → Recent timestamps
+- Other dates → Random dates within the last year
+
+### **Special Handling**
+- **IDENTITY columns** → Automatically skipped
+- **DEFAULT columns** → Let database handle (e.g., SYSDATETIME())
+- **Boolean/BIT** → Random true/false values
+
+### **Example Generated Data**
+```
+PersonID | FirstName | LastName | Age | DOB        | CreatedAt
+---------|-----------|----------|-----|------------|-------------------
+1        | Sarah     | Wilson   | 34  | 1989-03-15 | 2025-09-10 14:30:22
+2        | Michael   | Chen     | 28  | 1995-11-08 | 2025-09-10 14:30:22
+3        | Emma      | Taylor   | 42  | 1981-07-22 | 2025-09-10 14:30:22
+```
+
+## � Complete Workflow Example
+
+Here's a typical end-to-end workflow for testing Fabric mirroring:
+
+### **Step 1: Setup Configuration**
+```bash
+python create_config.py
+# Configure both LOCAL and REMOTE environments
+```
+
+### **Step 2: Create Table Structure**
+```bash
+python create_table_wizard.py
+# Interactively create a "products" table with:
+# - ProductID (INT, PK, IDENTITY)  
+# - ProductName (NVARCHAR(100))
+# - Price (DECIMAL(10,2))
+# - CreatedAt (DATETIME2, DEFAULT SYSDATETIME())
+```
+
+### **Step 3: Populate Local Environment**
+```bash
+python populate_tables_generic.py
+# Select: 1. LOCAL
+# Select: products table  
+# Generate: 1000 records
+```
+
+### **Step 4: Setup Fabric Mirroring**
+- Configure mirroring from LOCAL to REMOTE in Microsoft Fabric
+- Monitor initial sync
+
+### **Step 5: Populate More Data & Test Sync**
+```bash
+python populate_tables_generic.py
+# Select: 1. LOCAL  
+# Select: products table
+# Generate: 500 additional records
+```
+
+### **Step 6: Validate Mirroring**
+```bash
+python populate_tables_generic.py
+# Select: 2. REMOTE
+# Check record counts and data consistency
+```
+
+This workflow creates a complete test scenario for validating data synchronization between environments!
+
+## �🛠️ Configuration
 
 ### Flexible Configuration Options
 
@@ -189,24 +322,35 @@ This enables `host.docker.internal` connectivity from WSL to Windows services.
 - ✅ **Error Handling**: Clear error messages for missing configurations
 - ✅ **Multi-Environment Support**: Separate LOCAL/REMOTE configurations
 
-## 📊 Generated Data
+## 📊 Generated Data Examples
 
-Each run generates 10 rows of realistic Australian address data including:
+The system can generate realistic data for various table structures:
 
-- **Street Address**: Realistic Australian street addresses
-- **City**: Australian city names
-- **State**: Australian state abbreviations (NSW, VIC, QLD, etc.)
-- **Postal Code**: Valid Australian postal codes
-- **Country**: Fixed as "Australia"
-- **Created Timestamp**: Automatic timestamp
-
-Example output:
+### **Addresses Table**
 ```
 AddressID | StreetAddress        | City      | State | PostalCode | Country   | CreatedAt
 ----------|---------------------|-----------|-------|------------|-----------|------------------
 1         | 123 Collins Street  | Melbourne | VIC   | 3000       | Australia | 2025-09-10 14:30:00
 2         | 456 George Street   | Sydney    | NSW   | 2000       | Australia | 2025-09-10 14:30:01
 ```
+
+### **Person Table**
+```
+PersonID | FirstName | LastName | Age | DOB        | CreatedAt
+---------|-----------|----------|-----|------------|-------------------
+1        | Sarah     | Wilson   | 34  | 1989-03-15 | 2025-09-10 14:30:22
+2        | Michael   | Chen     | 28  | 1995-11-08 | 2025-09-10 14:30:22
+```
+
+### **Products Table (Example)**
+```
+ProductID | ProductName        | Price  | Category    | CreatedAt
+----------|-------------------|--------|-------------|-------------------
+1         | Wireless Mouse    | 45.99  | Electronics | 2025-09-10 14:30:22
+2         | Coffee Mug        | 12.50  | Kitchen     | 2025-09-10 14:30:22
+```
+
+**Data Volume:** Configure any number of records per table (default: 10, tested with 10,000+ records)
 
 ## 🔧 Troubleshooting
 
@@ -237,13 +381,56 @@ If `host.docker.internal` doesn't work:
 
 ## 🧪 Testing Fabric Mirroring
 
-This project is specifically designed for testing Microsoft Fabric mirroring:
+This project provides a complete testing framework for Microsoft Fabric mirroring:
 
-1. **Setup**: Create identical table structures on source and target databases
-2. **Populate**: Use these scripts to generate consistent test data
-3. **Mirror**: Configure Fabric mirroring between the instances
-4. **Validate**: Compare data consistency between source and mirrored instances
-5. **Monitor**: Track synchronization performance and latency
+### **Enhanced Testing Capabilities**
+
+1. **🏗️ Schema Creation**: Use `create_table_wizard.py` to design test tables with various data types
+2. **📊 Data Population**: Generate large datasets with `populate_tables_generic.py`
+3. **🔄 Multi-Environment**: Test across LOCAL and REMOTE environments seamlessly
+4. **📈 Volume Testing**: Generate thousands of records to test performance
+5. **🎯 Targeted Testing**: Create specific table structures for different mirroring scenarios
+
+### **Recommended Testing Workflow**
+
+#### **Phase 1: Baseline Setup**
+```bash
+# 1. Create test tables
+python create_table_wizard.py  # Create: customers, orders, products
+
+# 2. Populate initial dataset  
+python populate_tables_generic.py  # LOCAL → 10,000 customers
+python populate_tables_generic.py  # LOCAL → 50,000 orders  
+python populate_tables_generic.py  # LOCAL → 1,000 products
+```
+
+#### **Phase 2: Mirror Configuration**
+- Configure Fabric mirroring: LOCAL → REMOTE
+- Monitor initial synchronization
+- Validate data consistency
+
+#### **Phase 3: Incremental Testing**
+```bash
+# Generate additional data to test incremental sync
+python populate_tables_generic.py  # LOCAL → 5,000 new orders
+python populate_tables_generic.py  # LOCAL → 500 new customers
+
+# Validate sync performance and latency
+```
+
+#### **Phase 4: Validation**
+```bash
+# Compare record counts and data integrity
+python populate_tables_generic.py  # REMOTE → Check data consistency
+```
+
+### **Testing Scenarios**
+
+- **🔄 Continuous Sync**: Regular data generation to test ongoing mirroring
+- **📊 Bulk Load**: Large dataset creation for initial sync testing  
+- **🎯 Schema Changes**: Create new tables and test structure mirroring
+- **⚡ Performance**: High-volume data generation for stress testing
+- **🔍 Data Types**: Test various SQL Server data types and constraints
 
 ## 📦 Dependencies
 
