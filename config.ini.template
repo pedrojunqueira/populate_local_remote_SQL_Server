@@ -1,0 +1,33 @@
+# Sample configuration file template
+# Copy this to config.ini and fill in your actual values
+# DO NOT commit config.ini to version control!
+
+[DEFAULT]
+server = your_server_name_here
+database = your_database_name
+username = your_username
+password = your_password
+driver = {ODBC Driver 18 for SQL Server}
+trust_server_certificate = yes
+encrypt = no
+connection_timeout = 30
+
+[LOCAL]
+server = localhost
+database = sample_db
+username = your_username
+password = your_password
+driver = {ODBC Driver 18 for SQL Server}
+trust_server_certificate = yes
+encrypt = no
+connection_timeout = 30
+
+[REMOTE]
+server = your_remote_server.database.windows.net
+database = your_database
+username = your_username
+password = your_password
+driver = {ODBC Driver 18 for SQL Server}
+trust_server_certificate = yes
+encrypt = yes
+connection_timeout = 30
