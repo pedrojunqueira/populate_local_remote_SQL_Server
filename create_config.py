@@ -68,18 +68,39 @@ def create_config_file():
     """Create a configuration file with SQL Server connection settings."""
     
     config = configparser.ConfigParser()
+    config_file = 'config.ini'
     
-    print("=== SQL Server Configuration Setup ===")
-    print("This script will create a config.ini file with separate local and remote database settings.")
-    print("You can configure both or skip one if not needed.")
+    # Load existing configuration if it exists
+    if os.path.exists(config_file):
+        config.read(config_file)
+        print("📄 Existing configuration file found. Current sections:")
+        for section in config.sections():
+            print(f"   🔹 {section}")
+        print("You can add missing sections or update existing ones.")
+    else:
+        print("📄 No existing configuration file found. Creating new one.")
+    
+    print("\n=== SQL Server Configuration Setup ===")
+    print("This script will preserve existing sections and only update what you choose to configure.")
     print()
     
     # Ask which environments to configure
-    configure_local = input("Configure LOCAL SQL Server connection? (y/n, default: y): ").strip().lower()
-    configure_local = configure_local in ['', 'y', 'yes']
+    local_exists = 'LOCAL' in config.sections()
+    remote_exists = 'REMOTE' in config.sections()
     
-    configure_remote = input("Configure REMOTE SQL Server connection? (y/n, default: y): ").strip().lower()
-    configure_remote = configure_remote in ['', 'y', 'yes']
+    if local_exists:
+        configure_local = input(f"LOCAL section exists. Update it? (y/n, default: n): ").strip().lower()
+        configure_local = configure_local in ['y', 'yes']
+    else:
+        configure_local = input("Configure LOCAL SQL Server connection? (y/n, default: y): ").strip().lower()
+        configure_local = configure_local in ['', 'y', 'yes']
+    
+    if remote_exists:
+        configure_remote = input(f"REMOTE section exists. Update it? (y/n, default: n): ").strip().lower()
+        configure_remote = configure_remote in ['y', 'yes']
+    else:
+        configure_remote = input("Configure REMOTE SQL Server connection? (y/n, default: y): ").strip().lower()
+        configure_remote = configure_remote in ['', 'y', 'yes']
     
     if not configure_local and not configure_remote:
         print("❌ No configurations selected. Exiting.")
@@ -107,11 +128,13 @@ def create_config_file():
         
         config['REMOTE'] = remote_config
     
-    # Create DEFAULT section based on what was configured
-    if configure_local:
+    # Update DEFAULT section based on what was configured (preserve existing if no changes)
+    if configure_local and not configure_remote:
         config['DEFAULT'] = dict(config['LOCAL'])
-    elif configure_remote:
+    elif configure_remote and not configure_local:
         config['DEFAULT'] = dict(config['REMOTE'])
+    elif configure_local:  # Both configured, prefer LOCAL for DEFAULT
+        config['DEFAULT'] = dict(config['LOCAL'])
     
     # Write configuration file
     config_file = 'config.ini'

@@ -7,8 +7,8 @@ import sys
 # Initialize Faker with Australian locale
 fake = Faker('en_AU')
 
-def load_config(section='DEFAULT'):
-    """Load configuration from config.ini file."""
+def load_config(preferred_section='LOCAL', fallback_section='DEFAULT'):
+    """Load configuration from config.ini file with fallback support."""
     config_file = 'config.ini'
     
     if not os.path.exists(config_file):
@@ -19,16 +19,24 @@ def load_config(section='DEFAULT'):
     config = configparser.ConfigParser()
     config.read(config_file)
     
-    if section not in config:
-        print(f"❌ Section '{section}' not found in configuration file!")
-        print(f"Available sections: {list(config.sections())}")
-        sys.exit(1)
+    # Try preferred section first
+    if preferred_section in config:
+        print(f"✅ Using '{preferred_section}' configuration section")
+        return config[preferred_section]
     
-    return config[section]
+    # Fall back to fallback section
+    if fallback_section in config:
+        print(f"⚠️  '{preferred_section}' section not found, using '{fallback_section}' section")
+        return config[fallback_section]
+    
+    # Neither section found
+    print(f"❌ Neither '{preferred_section}' nor '{fallback_section}' sections found in configuration file!")
+    print(f"Available sections: {list(config.sections())}")
+    sys.exit(1)
 
 # Load configuration
 print("📖 Loading configuration...")
-config = load_config('DEFAULT')  # Use DEFAULT section instead of LOCAL
+config = load_config('LOCAL', 'DEFAULT')  # Try LOCAL first, fall back to DEFAULT
 
 # Extract connection parameters from config
 server = config.get('server')

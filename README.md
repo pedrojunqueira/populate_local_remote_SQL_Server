@@ -68,38 +68,85 @@ Run the interactive configuration script:
 python create_config.py
 ```
 
-This will prompt you for:
-- Local SQL Server details (for WSL: typically `host.docker.internal`)
-- Remote SQL Server details (Azure SQL Database or remote instance)
-- Database credentials (securely masked during input)
+The configuration script offers flexible setup options:
+
+- **Choose what to configure**: You can configure LOCAL only, REMOTE only, or both environments
+- **Environment-specific settings**: Each environment has tailored defaults and connection parameters
+- **Smart defaults**: 
+  - LOCAL: Defaults to `host.docker.internal`, encryption disabled
+  - REMOTE: Optimized for Azure SQL Database, encryption enabled
+
+**Configuration prompts:**
+1. Configure LOCAL SQL Server connection? (y/n)
+2. Configure REMOTE SQL Server connection? (y/n)
+
+For each selected environment, you'll be prompted for:
+- Server name/address (with environment-appropriate suggestions)
+- Database name
+- Username and password (securely masked during input)
+- ODBC driver settings
+
+**Resulting sections in config.ini:**
+- `[DEFAULT]` - Automatically created from your first configured environment
+- `[LOCAL]` - Local development/testing database settings (if configured)
+- `[REMOTE]` - Remote/Azure database settings (if configured)
 
 ### 4. Populate Sample Data
 
-**For Local Instance:**
+**Script Configuration Usage:**
+- `populate_table_local.py` - Uses `[DEFAULT]` section from config.ini
+- `populate_table.py` - Uses `[REMOTE]` section from config.ini
+
+**Run the scripts:**
 ```bash
-python populate_table_local.py
+python populate_table_local.py   # Uses DEFAULT configuration
+python populate_table.py         # Uses REMOTE configuration (if configured)
 ```
 
-**For Remote Instance:**
-```bash
-python populate_table.py
-```
+**Note:** If you only configured one environment, both scripts will use the `[DEFAULT]` section, which automatically inherits from your configured environment.
 
 Each script generates 10 rows of realistic Australian address data using the Faker library.
 
 ## 🛠️ Configuration
 
+### Flexible Configuration Options
+
+The `create_config.py` script provides flexible configuration management:
+
+1. **Selective Configuration**: Choose to configure LOCAL, REMOTE, or both environments
+2. **Automatic DEFAULT Section**: The first configured environment becomes the DEFAULT
+3. **Environment-Specific Settings**: Each environment has optimized connection parameters
+
 ### Configuration Sections
 
-The `config.ini` file contains three sections:
+The `config.ini` file can contain up to three sections:
 
-- **DEFAULT**: Fallback configuration values
-- **LOCAL**: Local SQL Server instance settings
-- **REMOTE**: Remote SQL Server instance settings
+- **DEFAULT**: Automatically created from your first configured environment (used by `populate_table_local.py`)
+- **LOCAL**: Local SQL Server instance settings (optional)
+- **REMOTE**: Remote SQL Server instance settings (used by `populate_table.py`)
 
-### Sample Configuration Structure
+### Sample Configuration Scenarios
 
+**Scenario 1: Only REMOTE configured**
 ```ini
+[DEFAULT]
+server = your-server.database.windows.net
+database = your_database
+# ... (copies REMOTE settings)
+
+[REMOTE]  
+server = your-server.database.windows.net
+database = your_database
+encrypt = yes
+```
+
+**Scenario 2: Both LOCAL and REMOTE configured**
+```ini
+[DEFAULT]
+server = host.docker.internal
+database = sample_db
+# ... (copies LOCAL settings)
+
 [LOCAL]
 server = host.docker.internal
 database = sample_db
